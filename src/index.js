@@ -7,9 +7,9 @@ export default new phtml.Plugin('phtml-image-size', opts => {
 	const overrideAttrs = Object(opts).override;
 	const imageSizeCache = {};
 
-	return root => {
-		root.walk(node => {
-			const isImageWithSrc = node.type === 'element' && node.name === 'img' && node.attrs.contains('src');
+	return {
+		Element(node) {
+			const isImageWithSrc = node.name === 'img' && node.attrs.contains('src');
 
 			if (!isImageWithSrc) {
 				return;
@@ -25,7 +25,7 @@ export default new phtml.Plugin('phtml-image-size', opts => {
 
 			// resolve the image source path
 			const id = node.attrs.get('src');
-			const cwd = overrideCWD || path.dirname(node.source.from);
+			const cwd = overrideCWD || path.dirname(node.source.input.from);
 			const src = path.resolve(cwd, id);
 
 			// get the natural image size
@@ -53,6 +53,6 @@ export default new phtml.Plugin('phtml-image-size', opts => {
 
 			// update the size attributes
 			node.attrs.add(normalizedSize);
-		});
+		}
 	};
 });
