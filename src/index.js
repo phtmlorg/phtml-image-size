@@ -8,7 +8,7 @@ export default new phtml.Plugin('phtml-image-size', opts => {
 	const imageSizeCache = {};
 
 	return {
-		Element(node) {
+		Element (node) {
 			const isImageWithSrc = node.name === 'img' && node.attrs.contains('src');
 
 			if (!isImageWithSrc) {
