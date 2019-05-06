@@ -2,16 +2,42 @@ module.exports = {
 	'basic': {
 		message: 'supports basic usage'
 	},
-	'basic:override': {
-		message: 'supports { override: true } usage',
+	'basic:size:auto': {
+		message: 'supports { size: "auto" } usage',
 		options: {
-			override: true
+			size: 'auto'
+		},
+		expect: 'basic.expect.html'
+	},
+	'basic:size:intrinsic': {
+		message: 'supports { size: "intrinsic" } usage',
+		options: {
+			size: 'intrinsic'
 		}
 	},
-	'basic:override:auto': {
-		message: 'supports { override: "auto" } usage',
+	'basic:size:remove': {
+		message: 'supports { size: "remove" } usage',
 		options: {
-			override: 'auto'
+			size: 'remove'
+		}
+	},
+	'basic:intrinsicsize:auto': {
+		message: 'supports { intrinsicsize: "auto" } usage',
+		options: {
+			intrinsicsize: 'auto'
+		},
+		expect: 'basic.expect.html'
+	},
+	'basic:intrinsicsize:ignore': {
+		message: 'supports { intrinsicsize: "ignore" } usage',
+		options: {
+			intrinsicsize: 'ignore'
+		}
+	},
+	'basic:path': {
+		message: 'supports { path: "subdir" } usage',
+		options: {
+			path: './test/subdir'
 		}
 	}
 };

@@ -3,56 +3,115 @@ import path from 'path';
 import phtml from 'phtml';
 
 export default new phtml.Plugin('phtml-image-size', opts => {
-	const overrideCWD = Object(opts).cwd;
-	const overrideAttrs = Object(opts).override;
-	const imageSizeCache = {};
+	const config = {
+		intrinsicsize: intrinsicsizeOpts.find(intrinsicsize => intrinsicsize === Object(opts).intrinsicsize) || intrinsicsizeOpts[0],
+		size: sizeOpts.find(size => size === Object(opts).size) || sizeOpts[0],
+		path: [].concat(Object(opts).path || []),
+		cache: {}
+	};
 
 	return {
-		Element (node) {
-			const isImageWithSrc = node.name === 'img' && node.attrs.contains('src');
+		Element (element) {
+			const attrs = /^img$/.test(element.name) && element.attrs.toJSON();
 
-			if (!isImageWithSrc) {
-				return;
-			}
-
-			const width = node.attrs.get('width');
-			const height = node.attrs.get('height');
-			const shouldAssignAttrs = overrideAttrs || !width && !height;
-
-			if (!shouldAssignAttrs) {
+			if (!attrs || !attrs.src) {
 				return;
 			}
 
 			// resolve the image source path
-			const id = node.attrs.get('src');
-			const cwd = overrideCWD || path.dirname(node.source.input.from);
-			const src = path.resolve(cwd, id);
+			const paths = config.path.concat(path.dirname(element.source.input.from));
 
-			// get the natural image size
-			const size = imageSizeCache[src] = imageSizeCache[src] || imageSize(src);
+			// get the first available image size
+			const size = getImageSize(attrs.src, paths, config.cache);
 
-			// determine if both width and height attributes are useful
-			const hasUsefulWidth = width && width !== 'auto';
-			const hasUseulHeight = height && height !== 'auto';
-			const hasOnlyOneUsefulLength = hasUsefulWidth && !hasUseulHeight || hasUseulHeight && !hasUsefulWidth;
+			if (!size) {
+				return;
+			}
 
-			// normalized size either leverages an aspect ratio or is the natural size
-			const normalizedSize = overrideAttrs === 'auto' && hasOnlyOneUsefulLength
-				? {
-					width: hasUsefulWidth
-						? width
-					: Math.round(Number(node.attrs.get('height')) * size.height / size.width),
-					height: hasUseulHeight
-						? height
-					: Math.round(Number(node.attrs.get('width')) * size.height / size.width)
-				}
-			: {
-				width: size.width,
-				height: size.height
-			};
+			if (config.size !== 'ignore') {
+				transformSizeAttributes(element, attrs, config, size);
+			}
 
-			// update the size attributes
-			node.attrs.add(normalizedSize);
+			// { intrinsicsize }
+			if (config.intrinsicsize !== 'ignore') {
+				transformIntrinsicsizeAttribute(element, attrs, config, size);
+			}
 		}
 	};
 });
+
+function transformSizeAttributes (element, attrs, config, size) {
+	if (config.size === 'remove') {
+		element.attrs.remove({ width: null, height: null });
+	} else {
+		// determine if both width and height attributes are useful
+		const hasUsefulWidth = attrs.width && attrs.width !== 'auto';
+		const hasUseulHeight = attrs.height && attrs.height !== 'auto';
+
+		// set width and height, leveraging any use lengths
+		const newAttrs = (
+			config.size === 'intrinsic' ||
+			(!hasUsefulWidth && !hasUseulHeight)
+		)
+			? {
+				width: size.width,
+				height: size.height
+			}
+		: config.size === 'auto' && (!hasUsefulWidth || !hasUseulHeight)
+			? {
+				width: hasUsefulWidth
+					? attrs.width
+				: Math.round(Number(attrs.height) * size.height / size.width),
+				height: hasUseulHeight
+					? attrs.height
+				: Math.round(Number(attrs.width) * size.height / size.width)
+			}
+		: null;
+
+		// update the size attributes
+		if (newAttrs) {
+			element.attrs.add(newAttrs);
+		}
+	}
+}
+
+function transformIntrinsicsizeAttribute (element, attrs, config, size) {
+	if (config.intrinsicsize === 'remove') {
+		element.attrs.remove({ intrinsicsize: null });
+	} else {
+		// set width and height, leveraging any use lengths
+		const newAttrs = (
+			config.intrinsicsize === 'intrinsic' ||
+			(config.intrinsicsize === 'auto' && !attrs.intrinsicsize)
+		)
+			? {
+				intrinsicsize: `${size.width}x${size.height}`
+			}
+		: null;
+
+		// update the size attributes
+		if (newAttrs) {
+			element.attrs.add(newAttrs);
+		}
+	}
+}
+
+function getImageSize (id, cwds, cache) {
+	const cwd = cwds.shift();
+	const src = path.resolve(cwd, id);
+
+	try {
+		cache[src] = imageSize(src);
+	} catch (error) {
+		if (cwds.length) {
+			return getImageSize(cwds, id, cache);
+		}
+
+		return null;
+	}
+
+	return cache[src];
+}
+
+const intrinsicsizeOpts = ['auto', 'intrinsic', 'remove', 'ignore'];
+const sizeOpts = ['auto', 'intrinsic', 'remove', 'ignore'];
