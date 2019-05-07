@@ -104,7 +104,7 @@ function getImageSize (id, cwds, cache) {
 		cache[src] = imageSize(src);
 	} catch (error) {
 		if (cwds.length) {
-			return getImageSize(cwds, id, cache);
+			return getImageSize(id, cwds, cache);
 		}
 
 		return null;

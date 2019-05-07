@@ -1,6 +1,6 @@
 {
   "name": "@phtml/image-size",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Automatically add image size attributes in HTML",
   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
   "license": "CC0-1.0",
