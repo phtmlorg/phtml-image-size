@@ -1,5 +1,9 @@
 # Changes to pHTML Image Size
 
+### 4.1.0 (May 16, 2019)
+
+- Updated: `phtml` to 4.1.0 (minor)
+
 ### 4.0.1 (May 7, 2019)
 
 - Fixed: Issue with multiple paths failing to resolve
